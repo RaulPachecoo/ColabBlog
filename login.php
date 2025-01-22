@@ -1,14 +1,19 @@
 <?php
-session_start();
 
-$_SESSION['errorInicioSesion'] = $_SESSION['errorInicioSesion'] ?? 0;
-$_SESSION['ultimoIntento'] = $_SESSION['ultimoIntento'] ?? time();
+session_start();
 
 require_once 'requires/conexion.php';
 
-// Manejo del formulario de inicio de sesión
-if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['login']) && $_SESSION['errorInicioSesion'] < 3) {
+// 7. Definimos una variable de sesión para controlar los 3 intentos fallidos de inicio de sesión
+$_SESSION['errorInicioSesion'] = $_SESSION['errorInicioSesion'] ?? 0;
+$_SESSION['ultimoIntento'] = $_SESSION['ultimoIntento'] ?? time();
+$_SESSION['loginExito'] = $_SESSION['loginExito'] ?? false;
+
+// 6. Formulario de Inicio de Sesión
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['botonLogin']) && $_SESSION['errorInicioSesion'] < 3) {
+    // Comprobamos que el email es válido
     $email = filter_var(trim($_POST['emailLogin']), FILTER_VALIDATE_EMAIL);
+    // Comprobamos que la contraseña es válida
     $password = trim($_POST['passwordLogin']);
 
     if ($email && $password) {
@@ -18,39 +23,46 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['login']) && $_SESSION[
 
         if ($stmt->rowCount() == 1) {
             $user = $stmt->fetch();
+
+            // Verificar la contraseña
             if (password_verify($password, $user['password'])) {
-                $_SESSION['errorInicioSesion'] = 0;
-                $_SESSION['rol'] = $user['rol'];
-                $_SESSION['nombre'] = $user['email'];
-                header("Location: index.php");
-                exit();
+                // Inicio de sesión exitoso
+                $_SESSION['errorInicioSesion'] = 0; // Restablecer intentos fallidos
+                $_SESSION['loginExito'] = true;
+                $_SESSION['usuario_id'] = $user['id']; // Guardar el ID del usuario en la sesión
+                $_SESSION['usuario_nombre'] = $user['nombre']; // Guardar opcionalmente el nombre del usuario
             } else {
+                // Contraseña incorrecta
+                $_SESSION['errorPassLogin'] = "La contraseña no es correcta.";
                 $_SESSION['errorInicioSesion']++;
-                $_SESSION['ultimoIntento'] = time();
-                echo "Contraseña incorrecta.";
+                $_SESSION['ultimoIntento'] = time(); // Guardar la hora del último intento fallido
             }
         } else {
-            echo "Email no registrado.";
+            // El email no existe
+            $_SESSION['errorPassLogin'] = "El email no existe en nuestra Base de Datos.";
         }
     } else {
-        echo "Por favor completa todos los campos de inicio de sesión.";
+        // Email o contraseña no válidos
+        $_SESSION['errorPassLogin'] = "Email o contraseña erróneos.";
     }
+
+    // Redirigir al índice tras procesar el formulario
+    header("Location: index.php");
+    exit();
 }
 
-// Si se superan los 3 intentos, bloquear temporalmente
+// 7. Controlamos los 3 intentos fallidos de inicio de sesión
 if ($_SESSION['errorInicioSesion'] >= 3) {
-    $tiempoRestante = time() - $_SESSION['ultimoIntento']; // Tiempo transcurrido desde el último intento fallido
+    $tiempoRestante = time() - $_SESSION['ultimoIntento'];
     if ($tiempoRestante < 5) {
-        // Si no han pasado los 5 segundos, bloquear al usuario y mostrar un mensaje
-        echo "<h2>Has superado el número de intentos permitidos. Por favor, espera 5 segundos.</h2>";
-        echo "<script>
-            setTimeout(function() {
-                window.location.reload(); // Recargar la página después de 5 segundos
-            }, 5000);
+        // Bloqueo al usuario durante 5 segundos
+        echo "<script> 
+        setTimeout(function() {
+            window.location.reload();
+        }, 5000);
         </script>";
-        exit(); // Detener la ejecución para que no continúe con el resto del código
     } else {
-        // Si ya han pasado los 5 segundos, reseteamos los errores
+        // Hacemos un reset de los errores si han pasado más de 5 segundos
         $_SESSION['errorInicioSesion'] = 0;
     }
 }

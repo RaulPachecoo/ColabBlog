@@ -1,55 +1,51 @@
+
 <?php
-// Iniciar sesión
+
 session_start();
+
 require_once 'requires/conexion.php';
 
-// Asegurarse de que $pdo esté definido
-if (!isset($pdo)) {
-    $_SESSION['registro_mensaje'] = "Error en la conexión a la base de datos.";
-    header("Location: index.php");
-    exit;
-}
+// 4. Si se ha enviado el formulario de registro 
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['botonRegistro'])) {
+    // Comprobamos que el email es válido
+    $email = filter_var(trim($_POST['emailRegistro']), FILTER_VALIDATE_EMAIL);
+    // Comprobamos que la contraeña es válida
+    $password = trim($_POST['passwordRegistro']);
+    echo "entro en el primer if";
+    var_dump($email);
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['register'])) {
-    // Validar y limpiar entradas
-    $nombre = isset($_POST['nombreRegistro']) ? trim($_POST['nombreRegistro']) : null;
-    $apellidos = isset($_POST['apellidosRegistro']) ? trim($_POST['apellidosRegistro']) : null;
-    $email = isset($_POST['emailRegistro']) ? filter_var(trim($_POST['emailRegistro']), FILTER_VALIDATE_EMAIL) : null;
-    $password = isset($_POST['passwordRegistro']) ? trim($_POST['passwordRegistro']) : null;
+    // Compruebo si el email y el password ya están en la tabla
+    if ($email && $password) {
+        $stmt = $pdo->prepare("SELECT id FROM usuarios WHERE email=:email");
+        $stmt->bindParam(':email', $email);
+        $stmt->execute();
+        var_dump($email);
 
-    if ($nombre && $apellidos && $email && $password) {
-        try {
-            // Comprobar si el email ya existe
-            $stmt = $pdo->prepare("SELECT id FROM usuarios WHERE email = :email");
-            $stmt->bindParam(':email', $email, PDO::PARAM_STR);
+        // Si no existe el email en la base de datos lo añado
+        if ($stmt->rowCount() == 0) {
+            $password_hash = password_hash($password, PASSWORD_BCRYPT); // Codifico la contraseña en la base de datos
+            $nombre = $_POST['nombreRegistro'];
+            $apellidos = $_POST['apellidosRegistro'];
+            $fecha = date("Y-m-d");
+            var_dump($fecha);
+            $stmt = $pdo->prepare("INSERT INTO usuarios (nombre, apellidos, email, password, fecha) 
+                                   VALUES (:nombre, :apellidos, :email, :password_hash, :fecha)");
+            $stmt->bindParam(':nombre', $nombre);
+            $stmt->bindParam(':apellidos', $apellidos);
+            $stmt->bindParam(':email', $email);
+            $stmt->bindParam(':password_hash', $password_hash);
+            $stmt->bindParam(':fecha', $fecha);
             $stmt->execute();
-
-            if ($stmt->rowCount() == 0) {
-                // Insertar el nuevo usuario
-                $password_hash = password_hash($password, PASSWORD_BCRYPT);
-                $fecha = date('Y-m-d H:i:s'); // Fecha actual en formato SQL
-
-                $stmt = $pdo->prepare("INSERT INTO usuarios (nombre, apellidos, email, password, fecha) VALUES (:nombre, :apellidos, :email, :password, :fecha)");
-                $stmt->bindParam(':nombre', $nombre, PDO::PARAM_STR);
-                $stmt->bindParam(':apellidos', $apellidos, PDO::PARAM_STR);
-                $stmt->bindParam(':email', $email, PDO::PARAM_STR);
-                $stmt->bindParam(':password', $password_hash, PDO::PARAM_STR);
-                $stmt->bindParam(':fecha', $fecha, PDO::PARAM_STR);
-                $stmt->execute();
-                $_SESSION['registro_mensaje'] = "Usuario registrado correctamente.";
-                header("Location: index.php");
-                exit;
-            } else {
-                $_SESSION['registro_mensaje'] = "El email ya está registrado.";
-            }
-        } catch (PDOException $e) {
-            $_SESSION['registro_mensaje'] = "Error en la base de datos: " . $e->getMessage();
+            $_SESSION['success_message'] = "Registro realizado con éxito";
+            require_once 'emailRegistro.php';
+            header("Location: index.php");
+            exit();
+        } else {
+            echo "El email ya existe";
         }
     } else {
-        $_SESSION['registro_mensaje'] = "Por favor completa todos los campos del formulario.";
+        echo "Por favor, rellena todos los campos del formulario de registro";
     }
+}else{
+    echo "no hago el if";
 }
-
-// Redirigir de vuelta a index.php
-header("Location: index.php");
-exit;
