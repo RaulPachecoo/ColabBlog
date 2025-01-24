@@ -2,12 +2,14 @@
 session_start();
 require_once 'requires/conexion.php';
 require_once 'entradas.php';
+require_once 'categorias.php'; 
 
 // Instanciar la clase Entrada con la conexión PDO
 $entradaObj = new Entrada($pdo);
-
+$categoriaObj = new Categoria($pdo);
 // Obtener todas las entradas
 $entradas = $entradaObj->conseguirUltimasEntradas();
+$categorias = $categoriaObj->conseguirCategorias();
 ?>
 
 <!DOCTYPE html>
@@ -26,11 +28,18 @@ $entradas = $entradaObj->conseguirUltimasEntradas();
         <nav>
             <ul>
                 <li><a href="index.php">Inicio</a></li>
-                <li><a href="#">Acción</a></li>
-                <li><a href="#">Rol</a></li>
-                <li><a href="#">Deportes</a></li>
-                <li><a href="#">Responsabilidad</a></li>
-                <li><a href="#">Contacto</a></li>
+                <!-- Mostrar categorías dinámicamente -->
+                <?php if ($categorias): ?>
+                    <?php foreach ($categorias as $categoria): ?>
+                        <li>
+                            <a href="entradas_categoria.php?categoria_id=<?= htmlspecialchars($categoria['id']) ?>">
+                                <?= htmlspecialchars($categoria['nombre']) ?>
+                            </a>
+                        </li>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <li><a href="#">No hay categorías</a></li>
+                <?php endif; ?>
             </ul>
         </nav>
     </header>

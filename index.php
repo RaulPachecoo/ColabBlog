@@ -1,13 +1,16 @@
 <?php
 session_start();
 require_once 'requires/conexion.php';
-require_once 'entradas.php'; 
+require_once 'entradas.php';
+require_once 'categorias.php';
 
 // Instanciar la clase Entrada con la conexión PDO
 $entradaObj = new Entrada($pdo);
+$categoriaObj = new Categoria($pdo);
 
 // Obtener las últimas entradas
 $entradas = $entradaObj->conseguirUltimasEntradas();
+$categorias = $categoriaObj->conseguirCategorias();
 
 $_SESSION['loginExito'] = $_SESSION['loginExito'] ?? false;
 ?>
@@ -21,9 +24,15 @@ $_SESSION['loginExito'] = $_SESSION['loginExito'] ?? false;
     <title>Blog de Videojuegos</title>
     <link rel="stylesheet" href="assets/css/estilos.css">
     <script>
-        // Función para mostrar/ocultar el formulario de crear entrada
+        // Alternar visibilidad del formulario de crear entrada
         function toggleFormularioCrearEntrada() {
             const formulario = document.getElementById('formularioCrearEntrada');
+            formulario.style.display = formulario.style.display === 'none' ? 'block' : 'none';
+        }
+
+        // Alternar visibilidad del formulario de crear categoría
+        function toggleFormularioCrearCategoria() {
+            const formulario = document.getElementById('formularioCrearCategoria');
             formulario.style.display = formulario.style.display === 'none' ? 'block' : 'none';
         }
     </script>
@@ -34,14 +43,23 @@ $_SESSION['loginExito'] = $_SESSION['loginExito'] ?? false;
         <h1>Blog de Videojuegos</h1>
         <nav>
             <ul>
-                <li><a href="#">Inicio</a></li>
-                <li><a href="#">Acción</a></li>
-                <li><a href="#">Rol</a></li>
-                <li><a href="#">Deportes</a></li>
-                <li><a href="#">Responsabilidad</a></li>
-                <li><a href="#">Contacto</a></li>
+                <li><a href="index.php">Inicio</a></li>
+                <!-- Mostrar categorías dinámicamente -->
+                <?php if ($categorias): ?>
+                    <?php foreach ($categorias as $categoria): ?>
+                        <li>
+                            <a href="entradas_categoria.php?categoria_id=<?= htmlspecialchars($categoria['id']) ?>">
+                                <?= htmlspecialchars($categoria['nombre']) ?>
+                            </a>
+                        </li>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <li><a href="#">No hay categorías</a></li>
+                <?php endif; ?>
+                <li><a href="contacto.php">Contacto</a></li>
             </ul>
         </nav>
+
     </header>
     <main>
         <section class="content">
@@ -73,10 +91,10 @@ $_SESSION['loginExito'] = $_SESSION['loginExito'] ?? false;
                         <h3>Nueva Entrada</h3>
                         <label for="titulo">Título:</label>
                         <input type="text" id="titulo" name="titulo" required>
-                        
+
                         <label for="descripcion">Descripción:</label>
                         <textarea id="descripcion" name="descripcion" required></textarea>
-                        
+
                         <label for="categoria">Categoría:</label>
                         <select id="categoria" name="categoria_id" required>
                             <?php
@@ -86,11 +104,21 @@ $_SESSION['loginExito'] = $_SESSION['loginExito'] ?? false;
                                     <option value="<?php echo $categoria['id']; ?>">
                                         <?php echo htmlspecialchars($categoria['nombre']); ?>
                                     </option>
-                                <?php endforeach; 
+                            <?php endforeach;
                             endif; ?>
                         </select>
-                        
+
                         <button type="submit">Guardar Entrada</button>
+                    </form>
+                </div>
+                <div style="margin-top: 20px;">
+                    <button onclick="toggleFormularioCrearCategoria()">Crear Categoría</button>
+                    <form id="formularioCrearCategoria" method="POST" action="crear_categoria.php" style="display: none; margin-top: 10px;">
+                        <h3>Nueva Categoría</h3>
+                        <label for="nombreCategoria">Nombre de la categoría:</label>
+                        <input type="text" id="nombreCategoria" name="nombreCategoria" required>
+
+                        <button type="submit">Guardar Categoría</button>
                     </form>
                 </div>
                 <div>

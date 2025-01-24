@@ -158,4 +158,20 @@ class Entrada
             return false;
         }
     }
+
+    public function conseguirEntradasPorCategoria($categoria_id) {
+        // Consulta SQL para obtener las entradas de una categoría específica
+        $sql = "SELECT e.id, e.titulo, e.descripcion, e.fecha, u.nombre AS usuario_nombre 
+                FROM entradas e
+                JOIN usuarios u ON e.usuario_id = u.id
+                WHERE e.categoria_id = :categoria_id
+                ORDER BY e.fecha DESC";  // Ordenamos por fecha de manera descendente
+
+        // Preparamos y ejecutamos la consulta
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([':categoria_id' => $categoria_id]);
+
+        // Devolver las entradas obtenidas como un array
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }
