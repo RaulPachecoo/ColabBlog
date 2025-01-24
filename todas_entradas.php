@@ -52,11 +52,11 @@ $categorias = $categoriaObj->conseguirCategorias();
                     <article>
                         <h3>
                             <a href="entrada_detalle.php?id=<?php echo htmlspecialchars($entrada['entrada_id']); ?>">
-                                <?php echo htmlspecialchars($entrada['entrada_titulo']); ?>
+                                <?php echo htmlspecialchars($entrada['titulo']); ?>
                             </a>
                         </h3>
                         <p><strong>Categoría:</strong> <?php echo htmlspecialchars($entrada['categoria_nombre']); ?></p>
-                        <p><em>Fecha: <?php echo htmlspecialchars($entrada['entrada_fecha']); ?></em></p>
+                        <p><em>Fecha: <?php echo htmlspecialchars($entrada['fecha']); ?></em></p>
                     </article>
                 <?php endforeach; ?>
             <?php else: ?>

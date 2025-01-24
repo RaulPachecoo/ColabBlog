@@ -113,3 +113,30 @@ aside button {
 aside button:hover {
     background-color: #005599;
 }
+
+.input-error {
+    border: 1px solid red;
+}
+
+.checkbox-container {
+    display: flex;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.checkbox-container input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    margin-right: 10px;
+    cursor: pointer;
+}
+
+.checkbox-container label {
+    cursor: pointer;
+    font-size: 14px;
+}
+
+
+
+
+

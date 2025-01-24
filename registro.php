@@ -38,6 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['botonRegistro'])) {
             $stmt->execute();
             $_SESSION['success_message'] = "Registro realizado con éxito";
             require_once 'emailRegistro.php';
+            enviarCorreoConfirmacion($email, $nombre);
             header("Location: index.php");
             exit();
         } else {

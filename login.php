@@ -15,6 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['botonLogin']) && $_SES
     $email = filter_var(trim($_POST['emailLogin']), FILTER_VALIDATE_EMAIL);
     // Comprobamos que la contraseña es válida
     $password = trim($_POST['passwordLogin']);
+    $recordarme = isset($_POST['recordarme']); // Verificar si se seleccionó el checkbox "Recuérdame"
 
     if ($email && $password) {
         $stmt = $pdo->prepare("SELECT * FROM usuarios WHERE email = :email");
@@ -29,8 +30,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['botonLogin']) && $_SES
                 // Inicio de sesión exitoso
                 $_SESSION['errorInicioSesion'] = 0; // Restablecer intentos fallidos
                 $_SESSION['loginExito'] = true;
-                $_SESSION['usuario_id'] = $user['id']; // Guardar el ID del usuario en la sesión
-                $_SESSION['usuario_nombre'] = $user['nombre']; // Guardar opcionalmente el nombre del usuario
+                $_SESSION['usuario_id'] = $user['id'];
+                $_SESSION['usuario_nombre'] = $user['nombre'];
+
+                if ($recordarme) {
+                    // Establecer cookies válidas por 1 día
+                    setcookie('usuario_email', $email, time() + 86400, '/');
+                    setcookie('usuario_id', $user['id'], time() + 86400, '/');
+                }
+
+                // Redirigir al índice tras un login exitoso
+                header("Location: index.php");
+                exit();
             } else {
                 // Contraseña incorrecta
                 $_SESSION['errorPassLogin'] = "La contraseña no es correcta.";
@@ -50,6 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['botonLogin']) && $_SES
     header("Location: index.php");
     exit();
 }
+
 
 // 7. Controlamos los 3 intentos fallidos de inicio de sesión
 if ($_SESSION['errorInicioSesion'] >= 3) {

@@ -21,8 +21,8 @@ class Entrada
             $sql = "
                 SELECT 
                     e.id AS entrada_id,
-                    e.titulo AS entrada_titulo,
-                    e.fecha AS entrada_fecha,
+                    e.titulo,
+                    e.fecha,
                     c.id AS categoria_id,
                     c.nombre AS categoria_nombre
                 FROM entradas e
@@ -159,7 +159,8 @@ class Entrada
         }
     }
 
-    public function conseguirEntradasPorCategoria($categoria_id) {
+    public function conseguirEntradasPorCategoria($categoria_id)
+    {
         // Consulta SQL para obtener las entradas de una categoría específica
         $sql = "SELECT e.id, e.titulo, e.descripcion, e.fecha, u.nombre AS usuario_nombre 
                 FROM entradas e
@@ -172,6 +173,22 @@ class Entrada
         $stmt->execute([':categoria_id' => $categoria_id]);
 
         // Devolver las entradas obtenidas como un array
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    // En la clase Entrada
+    public function buscarEntradasPorTitulo($titulo)
+    {
+        $sql = "SELECT e.*, c.nombre AS categoria_nombre
+            FROM entradas e
+            LEFT JOIN categorias c ON e.categoria_id = c.id
+            WHERE e.titulo LIKE :titulo  -- Cambiar 'e.entrada_titulo' a 'e.titulo'
+            ORDER BY e.fecha DESC";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':titulo', '%' . $titulo . '%', PDO::PARAM_STR); // El '%' es para búsqueda parcial
+        $stmt->execute();
+
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }
